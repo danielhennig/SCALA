@@ -30,6 +30,9 @@ Plano completo: `C:\Users\Daniel\.claude\plans\quero-desenvolver-um-site-dreamy-
 - `npm run dev` / `npm run build`
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`
 - `npx supabase start` (exige Docker Desktop), `npx supabase test db`
+- `npx supabase migration new <nome>` → editar SQL → `npx supabase db reset` → `npm run db:types`
+- Setup local: copiar `.env.example` para `.env.local` com os valores de `npx supabase status`
+- Remoto (Supabase `bzurlufyxitreuudyosq`, sa-east-1): migrations só via `npx supabase db push`, nunca pelo dashboard/MCP, para não divergir o histórico
 
 ## Convenções
 

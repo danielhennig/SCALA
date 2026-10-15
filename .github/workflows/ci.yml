@@ -18,3 +18,17 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run format:check
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Starts only Postgres and applies supabase/migrations.
+      - run: npx supabase db start
+      - run: npx supabase db lint --level error
+      - run: npx supabase test db
