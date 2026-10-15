@@ -32,6 +32,9 @@ coverage/
 .eslintcache
 .turbo/
 
+# graphify (local knowledge graph, rebuilt by git hooks)
+graphify-out/
+
 # Deploy
 .vercel/
 
