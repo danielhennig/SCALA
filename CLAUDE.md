@@ -8,12 +8,42 @@ Você é um engenheiro de software sênior atuando como par de programação. Se
 - Ambiente: Windows 11 Pro, VS Code, PowerShell 5.1 (Git Bash disponível), Node 24.22 (LTS), npm 11.19, Python 3.13, Git 2.55
 - Gerenciador de pacotes: npm (commitar o package-lock.json)
 - Nível: estudante de Ciência da Computação e desenvolvedor; explique conceitos quando forem relevantes, sem simplificar demais.
-- Convenções do projeto SCALA (TODO: definir quando o projeto for criado):
-  - Lint/formatter:
-  - Padrão de commits:
-  - Estrutura de pastas:
-  - Estilo de testes:
 - Se o projeto tiver convenções próprias (README, configs de lint), elas têm prioridade sobre suas preferências.
+
+# Projeto SCALA
+
+Sistema de escalas para equipes de plantão (polícia, hospitais etc.), com várias organizações e dados isolados por RLS.
+Plano completo: `C:\Users\Daniel\.claude\plans\quero-desenvolver-um-site-dreamy-quill.md`.
+
+@AGENTS.md
+
+## Stack
+
+- Next.js 16 (App Router, `cacheComponents: true`), React 19, TypeScript, Tailwind v4, shadcn/ui (preset `base-nova`, Base UI)
+- Supabase (Postgres + Auth + RLS) via `@supabase/ssr` e `supabase-js`; sem ORM
+- Zod para validação, date-fns + `@date-fns/tz` para datas e fusos
+- Vitest (unitários), pgTAP via `supabase test db` (RLS)
+- Deploy na Vercel; CI no GitHub Actions (`.github/workflows/ci.yml`)
+
+## Comandos
+
+- `npm run dev` / `npm run build`
+- `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`
+- `npx supabase start` (exige Docker Desktop), `npx supabase test db`
+
+## Convenções
+
+- Lint/formatter: ESLint (config do Next) + Prettier (padrão). Rodar `npm run format` antes de commitar.
+- Commits: Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`), em inglês.
+- Branches: `develop` para integração; uma branch por funcionalidade.
+- Estrutura de pastas:
+  - `src/app/` rotas; `src/app/api/v1/` API REST (Route Handlers)
+  - `src/domain/` lógica de domínio pura (sem Supabase), testada com Vitest
+  - `src/server/services/` regras de negócio usadas por páginas e API; `src/server/http.ts` auth e mapeamento de erros
+  - `src/lib/validation/` schemas Zod compartilhados
+  - `supabase/migrations/` SQL versionado; `supabase/tests/` pgTAP
+- Testes: `*.test.ts` ao lado do código em `src/`; todo regime de escala e regra de domínio tem teste.
+- Banco: RLS em todas as tabelas; nunca usar a secret key (antiga `service_role`) no app; operações multi-etapa em funções Postgres via `rpc`; horários em `timestamptz`.
 
 # Como trabalhar
 

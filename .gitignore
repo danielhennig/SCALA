@@ -35,6 +35,9 @@ coverage/
 # Deploy
 .vercel/
 
+# Certificates / keys
+*.pem
+
 # Claude Code local settings
 .claude/settings.local.json
 
