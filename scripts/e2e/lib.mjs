@@ -108,9 +108,16 @@ export function createContext() {
             ? body
             : JSON.stringify(body),
     });
-    // React's SSR separates adjacent text and values with <!-- --> markers
-    // ("de <!-- -->11 h"); strip them so tests match text as users see it.
-    const text = (await res.text()).replaceAll("<!-- -->", "");
+    // Make page text match what users see: React's SSR separates adjacent
+    // text and values with <!-- --> markers ("de <!-- -->11 h") and escapes
+    // quotes in text nodes (&quot;).
+    const text = (await res.text())
+      .replaceAll("<!-- -->", "")
+      .replaceAll("&quot;", '"')
+      .replaceAll("&#x27;", "'")
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&amp;", "&");
     let json = null;
     try {
       json = text ? JSON.parse(text) : null;

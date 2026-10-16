@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { AppError } from "./errors";
 
@@ -23,6 +24,9 @@ export function withErrorHandling<Args extends unknown[]>(
     try {
       return await handler(...args);
     } catch (error) {
+      // Let Next.js' own control-flow signals through (redirect/notFound, and
+      // request-time APIs like cookies() bailing out of a build prerender).
+      unstable_rethrow(error);
       if (error instanceof AppError) {
         if (error.status >= 500) console.error(error, error.cause);
         return jsonError(error);

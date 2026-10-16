@@ -150,7 +150,8 @@ select throws_ok(
 
 -- Expired invitation (setup as postgres)
 reset role;
-update public.invitations set expires_at = now() - interval '1 minute' where email = 'membro@example.com';
+update public.invitations set expires_at = now() - interval '1 minute'
+  where email = 'membro@example.com' and org_id = 'b0000000-0000-0000-0000-000000000001';
 set local role authenticated;
 
 select pg_temp.login('a0000000-0000-0000-0000-000000000006'); -- fabio
@@ -204,7 +205,10 @@ select lives_ok(
 );
 
 reset role;
-create temp table uti as select id from public.teams where name = 'UTI Adulto';
+-- Scoped to this test's org: the database may hold other data (e.g. e2e runs).
+create temp table uti as
+  select id from public.teams
+  where name = 'UTI Adulto' and org_id = 'b0000000-0000-0000-0000-000000000001';
 grant select on uti to authenticated;
 set local role authenticated;
 

@@ -34,6 +34,43 @@ export type Database = {
   };
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string;
+          actor_id: string | null;
+          changes: NonNullable<Json>;
+          created_at: string;
+          entity: string;
+          entity_id: string | null;
+          id: number;
+          org_id: string;
+          txid: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          action: string;
+          actor_id?: string | null;
+          changes: NonNullable<Json>;
+          created_at?: string;
+          entity: string;
+          entity_id?: string | null;
+          id?: never;
+          org_id: string;
+          txid?: number;
+        };
+        Update: {
+          action?: string;
+          actor_id?: string | null;
+          changes?: NonNullable<Json>;
+          created_at?: string;
+          entity?: string;
+          entity_id?: string | null;
+          id?: never;
+          org_id?: string;
+          txid?: number;
+        };
+        Relationships: [];
+      };
       invitations: {
         Row: {
           accepted_at: string | null;

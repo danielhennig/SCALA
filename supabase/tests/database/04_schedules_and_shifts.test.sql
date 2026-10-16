@@ -69,7 +69,9 @@ select lives_ok(
 );
 
 reset role;
-create temp table sched as select id, name from public.schedules;
+-- Scoped to this test's org: the database may hold other data (e.g. e2e runs).
+create temp table sched as
+  select id, name from public.schedules where org_id = '20000000-0000-0000-0000-00000000000a';
 grant select, insert on sched to authenticated;
 set local role authenticated;
 
@@ -87,7 +89,9 @@ select lives_ok(
 );
 
 reset role;
-insert into sched select id, name from public.schedules where name = 'PS nov';
+insert into sched
+  select id, name from public.schedules
+  where name = 'PS nov' and org_id = '20000000-0000-0000-0000-00000000000a';
 set local role authenticated;
 
 select throws_ok(

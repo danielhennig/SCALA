@@ -207,6 +207,46 @@ export async function deleteSchedule(
   if (!data) throw new AppError("NOT_FOUND", "Escala não encontrada.");
 }
 
+/**
+ * Publishing makes the schedule visible to its team (RLS). Edits after
+ * publishing stay allowed and are visible right away (and audited).
+ */
+export async function setScheduleStatus(
+  auth: AuthContext,
+  orgId: string,
+  scheduleId: string,
+  status: ScheduleStatus,
+): Promise<ScheduleSummary> {
+  await requireSchedulingManager(auth, orgId);
+  assertUuid(scheduleId, "Escala não encontrada.");
+
+  if (status === "published") {
+    const { count, error } = await auth.supabase
+      .from("shifts")
+      .select("id", { count: "exact", head: true })
+      .eq("schedule_id", scheduleId);
+    if (error) throw fromPostgrestError(error);
+    if (!count) {
+      throw new AppError(
+        "VALIDATION_ERROR",
+        "A escala não tem plantões. Gere ou preencha antes de publicar.",
+      );
+    }
+  }
+
+  const { data, error } = await auth.supabase
+    .from("schedules")
+    .update({ status })
+    .eq("id", scheduleId)
+    .eq("org_id", orgId)
+    .select(SUMMARY_COLUMNS)
+    .maybeSingle();
+
+  if (error) throw fromPostgrestError(error);
+  if (!data) throw new AppError("NOT_FOUND", "Escala não encontrada.");
+  return toSummary(data);
+}
+
 /** Schedule + its shifts + the people to show as grid rows. */
 export async function getScheduleDetail(
   auth: AuthContext,

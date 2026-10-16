@@ -41,7 +41,7 @@ async function OrganizationHeader({
           Você é {ROLE_LABELS[role].toLowerCase()} · {organization.slug}
         </p>
       </div>
-      <OrgNav orgId={orgId} />
+      <OrgNav orgId={orgId} showAudit={role === "admin"} />
     </div>
   );
 }

@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "cn";
 
-export function OrgNav({ orgId }: { orgId: string }) {
+export function OrgNav({
+  orgId,
+  showAudit,
+}: {
+  orgId: string;
+  /** Admin-only tab; the page and RLS enforce it too. */
+  showAudit: boolean;
+}) {
   const pathname = usePathname();
   const base = `/orgs/${orgId}`;
   const tabs = [
@@ -13,6 +20,7 @@ export function OrgNav({ orgId }: { orgId: string }) {
     { href: `${base}/members`, label: "Membros" },
     { href: `${base}/teams`, label: "Equipes" },
     { href: `${base}/shifts`, label: "Turnos e regimes" },
+    ...(showAudit ? [{ href: `${base}/audit`, label: "Auditoria" }] : []),
   ];
 
   return (

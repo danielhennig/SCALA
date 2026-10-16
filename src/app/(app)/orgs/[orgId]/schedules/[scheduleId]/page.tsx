@@ -72,16 +72,44 @@ async function ScheduleSection({
           </p>
         </div>
         {canManage && (
-          <ApiActionButton
-            path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}`}
-            confirmMessage={`Excluir a escala ${schedule.name} e todos os seus plantões?`}
-            redirectTo={`/orgs/${orgId}/schedules`}
-            variant="destructive"
-          >
-            Excluir escala
-          </ApiActionButton>
+          <div className="flex flex-wrap items-start gap-2">
+            {schedule.status === "draft" ? (
+              <ApiActionButton
+                path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/publish`}
+                method="POST"
+                confirmMessage={`Publicar "${schedule.name}"? A equipe passa a ver a escala.`}
+                variant="default"
+              >
+                Publicar
+              </ApiActionButton>
+            ) : (
+              <ApiActionButton
+                path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/unpublish`}
+                method="POST"
+                confirmMessage={`Voltar "${schedule.name}" para rascunho? A equipe deixa de ver a escala.`}
+              >
+                Voltar para rascunho
+              </ApiActionButton>
+            )}
+            <ApiActionButton
+              path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}`}
+              confirmMessage={`Excluir a escala ${schedule.name} e todos os seus plantões?`}
+              redirectTo={`/orgs/${orgId}/schedules`}
+              variant="destructive"
+            >
+              Excluir escala
+            </ApiActionButton>
+          </div>
         )}
       </div>
+
+      {canManage && schedule.status === "published" && (
+        <p className="rounded-lg border border-green-300 bg-green-50 p-3 text-sm dark:border-green-800 dark:bg-green-950/30">
+          Escala publicada: a equipe já vê estes plantões em &quot;Minha
+          escala&quot;. Alterações na grade aparecem para todos na hora e ficam
+          registradas na auditoria.
+        </p>
+      )}
 
       {canManage && (
         <GeneratePanel
