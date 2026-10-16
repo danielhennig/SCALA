@@ -137,7 +137,15 @@ export async function deleteTeam(
     .select("id")
     .maybeSingle();
 
-  if (error) throw fromPostgrestError(error);
+  if (error) {
+    if (error.code === "23503") {
+      throw new AppError(
+        "CONFLICT",
+        "A equipe tem escalas. Exclua as escalas antes de excluir a equipe.",
+      );
+    }
+    throw fromPostgrestError(error);
+  }
   if (!data) throw new AppError("NOT_FOUND", "Equipe não encontrada.");
 }
 

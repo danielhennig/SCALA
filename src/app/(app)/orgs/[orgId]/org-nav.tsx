@@ -9,6 +9,7 @@ export function OrgNav({ orgId }: { orgId: string }) {
   const base = `/orgs/${orgId}`;
   const tabs = [
     { href: base, label: "Visão geral", exact: true },
+    { href: `${base}/schedules`, label: "Escalas" },
     { href: `${base}/members`, label: "Membros" },
     { href: `${base}/teams`, label: "Equipes" },
     { href: `${base}/shifts`, label: "Turnos e regimes" },

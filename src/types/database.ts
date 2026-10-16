@@ -273,6 +273,71 @@ export type Database = {
           },
         ];
       };
+      schedules: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          name: string;
+          org_id: string;
+          period_end: string;
+          period_start: string;
+          published_at: string | null;
+          status: Database["public"]["Enums"]["schedule_status"];
+          team_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name: string;
+          org_id: string;
+          period_end: string;
+          period_start: string;
+          published_at?: string | null;
+          status?: Database["public"]["Enums"]["schedule_status"];
+          team_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          period_end?: string;
+          period_start?: string;
+          published_at?: string | null;
+          status?: Database["public"]["Enums"]["schedule_status"];
+          team_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "schedules_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "schedules_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "schedules_team_id_org_id_fkey";
+            columns: ["team_id", "org_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "org_id"];
+          },
+        ];
+      };
       shift_types: {
         Row: {
           color: string;
@@ -311,6 +376,62 @@ export type Database = {
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shifts: {
+        Row: {
+          created_at: string;
+          ends_at: string;
+          id: string;
+          org_id: string;
+          schedule_id: string;
+          shift_type_id: string | null;
+          starts_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          ends_at: string;
+          id?: string;
+          org_id: string;
+          schedule_id: string;
+          shift_type_id?: string | null;
+          starts_at: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_at?: string;
+          id?: string;
+          org_id?: string;
+          schedule_id?: string;
+          shift_type_id?: string | null;
+          starts_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shifts_schedule_id_org_id_fkey";
+            columns: ["schedule_id", "org_id"];
+            isOneToOne: false;
+            referencedRelation: "schedules";
+            referencedColumns: ["id", "org_id"];
+          },
+          {
+            foreignKeyName: "shifts_shift_type_id_org_id_fkey";
+            columns: ["shift_type_id", "org_id"];
+            isOneToOne: false;
+            referencedRelation: "shift_types";
+            referencedColumns: ["id", "org_id"];
+          },
+          {
+            foreignKeyName: "shifts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
         ];
@@ -433,6 +554,14 @@ export type Database = {
           status: string;
         }[];
       };
+      replace_schedule_shifts: {
+        Args: {
+          p_delete_ids?: string[];
+          p_schedule_id: string;
+          p_shifts: Json;
+        };
+        Returns: number;
+      };
       save_rotation_pattern: {
         Args: {
           p_days: string[];
@@ -445,6 +574,7 @@ export type Database = {
     };
     Enums: {
       org_role: "admin" | "manager" | "member";
+      schedule_status: "draft" | "published";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -576,6 +706,7 @@ export const Constants = {
   public: {
     Enums: {
       org_role: ["admin", "manager", "member"],
+      schedule_status: ["draft", "published"],
     },
   },
 } as const;

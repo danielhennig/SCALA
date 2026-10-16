@@ -30,6 +30,7 @@ describe("formatTimeOfDay / formatDuration", () => {
     [390, "6h30"],
     [45, "45min"],
     [1440, "24h"],
+    [0, "0h"],
   ])("formats %i minutes as %s", (minutes, label) => {
     expect(formatDuration(minutes)).toBe(label);
   });

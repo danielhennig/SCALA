@@ -108,7 +108,9 @@ export function createContext() {
             ? body
             : JSON.stringify(body),
     });
-    const text = await res.text();
+    // React's SSR separates adjacent text and values with <!-- --> markers
+    // ("de <!-- -->11 h"); strip them so tests match text as users see it.
+    const text = (await res.text()).replaceAll("<!-- -->", "");
     let json = null;
     try {
       json = text ? JSON.parse(text) : null;
