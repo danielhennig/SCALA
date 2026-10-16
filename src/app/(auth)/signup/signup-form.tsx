@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD_LENGTH, signupSchema } from "@/lib/validation/auth";
 import { FormMessage } from "../form-message";
@@ -32,12 +33,18 @@ export function SignupForm() {
     setPending(true);
     setError(null);
     const { fullName, email, password } = parsed.data;
+    // Preserves e.g. ?next=/invite/<token> through e-mail confirmation.
+    const next = safeNextPath(
+      new URLSearchParams(window.location.search).get("next"),
+    );
+    const callback = new URL("/auth/callback", window.location.origin);
+    callback.searchParams.set("next", next);
     const { data, error: authError } = await createClient().auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/orgs`,
+        emailRedirectTo: callback.toString(),
       },
     });
     setPending(false);
@@ -58,7 +65,7 @@ export function SignupForm() {
     // With e-mail confirmation disabled (local dev) Supabase returns a session
     // right away; otherwise the user must click the link sent by e-mail.
     if (data.session) {
-      router.replace("/orgs");
+      router.replace(next);
       router.refresh();
     } else {
       setConfirmationSent(true);

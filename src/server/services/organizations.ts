@@ -1,10 +1,11 @@
 import "server-only";
-import { z } from "zod";
+import { cache } from "react";
 import type { OrgRole } from "@/lib/roles";
 import type { CreateOrganizationData } from "@/lib/validation/organizations";
 import type { Database } from "@/types/database";
 import type { AuthContext } from "../auth";
 import { AppError, fromPostgrestError } from "../errors";
+import { assertUuid } from "../params";
 
 type OrganizationRow = Database["public"]["Tables"]["organizations"]["Row"];
 
@@ -48,13 +49,13 @@ export async function listMyOrganizations({
   return data.map(({ role, organization }) => ({ ...organization, role }));
 }
 
-export async function getMyOrganization(
+// Memoized per request (React cache): layouts, pages and permission checks
+// can all call it without repeating the query.
+export const getMyOrganization = cache(async function getMyOrganization(
   { supabase, user }: AuthContext,
   orgId: string,
 ): Promise<{ organization: Organization; role: OrgRole }> {
-  if (!z.uuid().safeParse(orgId).success) {
-    throw new AppError("NOT_FOUND", "Organização não encontrada.");
-  }
+  assertUuid(orgId, "Organização não encontrada.");
 
   const { data, error } = await supabase
     .from("memberships")
@@ -66,6 +67,14 @@ export async function getMyOrganization(
   if (error) throw fromPostgrestError(error);
   if (!data) throw new AppError("NOT_FOUND", "Organização não encontrada.");
   return { organization: toOrganization(data.organization), role: data.role };
+});
+
+/** Resolves the caller's role in the org, or 404 if they're not a member. */
+export async function getMyRole(
+  auth: AuthContext,
+  orgId: string,
+): Promise<OrgRole> {
+  return (await getMyOrganization(auth, orgId)).role;
 }
 
 export async function createOrganization(

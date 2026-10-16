@@ -56,10 +56,30 @@ export function fromPostgrestError(error: PostgrestLikeError): AppError {
         "Dados inválidos.",
         error.message,
       );
-    case "42501": // insufficient_privilege
+    case "23503": // foreign_key_violation
+      return new AppError("VALIDATION_ERROR", "Referência inválida.");
+    case "42501": // insufficient_privilege (also RLS violations on insert)
       return new AppError("FORBIDDEN", "Sem permissão para esta ação.");
     case "PGRST116": // .single() found no rows
       return new AppError("NOT_FOUND", "Recurso não encontrado.");
+    // Business rules raised by our SQL functions/triggers (see migrations).
+    case "SC001":
+      return new AppError(
+        "CONFLICT",
+        "A organização precisa de pelo menos um administrador.",
+      );
+    case "SC002":
+      return new AppError("BAD_REQUEST", "Convite inválido ou expirado.");
+    case "SC003":
+      return new AppError(
+        "FORBIDDEN",
+        "Este convite foi enviado para outro e-mail.",
+      );
+    case "SC004":
+      return new AppError(
+        "CONFLICT",
+        "Essa pessoa já é membro da organização.",
+      );
     default: {
       const appError = new AppError("INTERNAL_ERROR", "Erro inesperado.");
       appError.cause = error;

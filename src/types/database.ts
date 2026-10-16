@@ -34,6 +34,71 @@ export type Database = {
   };
   public: {
     Tables: {
+      invitations: {
+        Row: {
+          accepted_at: string | null;
+          accepted_by: string | null;
+          created_at: string;
+          email: string;
+          expires_at: string;
+          id: string;
+          invited_by: string | null;
+          org_id: string;
+          revoked_at: string | null;
+          role: Database["public"]["Enums"]["org_role"];
+          token_hash: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string | null;
+          org_id: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["org_role"];
+          token_hash: string;
+        };
+        Update: {
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+          created_at?: string;
+          email?: string;
+          expires_at?: string;
+          id?: string;
+          invited_by?: string | null;
+          org_id?: string;
+          revoked_at?: string | null;
+          role?: Database["public"]["Enums"]["org_role"];
+          token_hash?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invitations_accepted_by_fkey";
+            columns: ["accepted_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invitations_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "invitations_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       memberships: {
         Row: {
           created_at: string;
@@ -135,11 +200,96 @@ export type Database = {
         };
         Relationships: [];
       };
+      team_members: {
+        Row: {
+          created_at: string;
+          org_id: string;
+          team_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          org_id: string;
+          team_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          org_id?: string;
+          team_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_members_org_id_user_id_fkey";
+            columns: ["org_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "memberships";
+            referencedColumns: ["org_id", "user_id"];
+          },
+          {
+            foreignKeyName: "team_members_team_id_org_id_fkey";
+            columns: ["team_id", "org_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id", "org_id"];
+          },
+        ];
+      };
+      teams: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          org_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "teams_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      accept_invitation: { Args: { p_token: string }; Returns: string };
+      create_invitation: {
+        Args: {
+          p_email: string;
+          p_org_id: string;
+          p_role?: Database["public"]["Enums"]["org_role"];
+        };
+        Returns: {
+          invitation_email: string;
+          invitation_expires_at: string;
+          invitation_id: string;
+          invitation_role: Database["public"]["Enums"]["org_role"];
+          token: string;
+        }[];
+      };
       create_organization: {
         Args: { p_name: string; p_slug: string; p_timezone?: string };
         Returns: {
@@ -158,6 +308,15 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      get_invitation: {
+        Args: { p_token: string };
+        Returns: {
+          email: string;
+          organization_name: string;
+          role: Database["public"]["Enums"]["org_role"];
+          status: string;
+        }[];
       };
     };
     Enums: {

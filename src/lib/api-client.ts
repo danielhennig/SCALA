@@ -49,5 +49,7 @@ export async function apiFetch<T>(
     );
   }
 
+  // 204 No Content (deletes) has no body.
+  if (body === null) return undefined as T;
   return (body as { data: T }).data;
 }

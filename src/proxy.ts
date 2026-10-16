@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { safeNextPath } from "@/lib/safe-redirect";
 import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
 
 const PROTECTED_PREFIXES = ["/orgs", "/me"];
@@ -44,7 +45,9 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAuthenticated && AUTH_PAGES.includes(pathname)) {
-    return redirectWithCookies(new URL("/orgs", request.url), response);
+    // Honor ?next= (e.g. an invite link) instead of always going to /orgs.
+    const next = safeNextPath(request.nextUrl.searchParams.get("next"));
+    return redirectWithCookies(new URL(next, request.url), response);
   }
 
   return response;

@@ -9,6 +9,11 @@ describe("fromPostgrestError", () => {
     ["22023", 400, "VALIDATION_ERROR"],
     ["42501", 403, "FORBIDDEN"],
     ["PGRST116", 404, "NOT_FOUND"],
+    ["23503", 400, "VALIDATION_ERROR"],
+    ["SC001", 409, "CONFLICT"],
+    ["SC002", 400, "BAD_REQUEST"],
+    ["SC003", 403, "FORBIDDEN"],
+    ["SC004", 409, "CONFLICT"],
   ])("maps %s to %i %s", (code, status, appCode) => {
     const error = fromPostgrestError({ code, message: "db error" });
     expect(error.status).toBe(status);
