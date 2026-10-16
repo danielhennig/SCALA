@@ -33,7 +33,7 @@ async function OrganizationOverview({
       </dl>
 
       <p className="text-sm text-muted-foreground">
-        Tipos de turno, regimes e escalas chegam nas próximas etapas.
+        A montagem das escalas chega na próxima etapa.
       </p>
     </div>
   );

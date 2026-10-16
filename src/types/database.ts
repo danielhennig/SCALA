@@ -200,6 +200,121 @@ export type Database = {
         };
         Relationships: [];
       };
+      rotation_pattern_days: {
+        Row: {
+          day_index: number;
+          org_id: string;
+          pattern_id: string;
+          shift_type_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          day_index: number;
+          org_id: string;
+          pattern_id: string;
+          shift_type_id: string;
+        };
+        Update: {
+          day_index?: number;
+          org_id?: string;
+          pattern_id?: string;
+          shift_type_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rotation_pattern_days_pattern_id_org_id_fkey";
+            columns: ["pattern_id", "org_id"];
+            isOneToOne: false;
+            referencedRelation: "rotation_patterns";
+            referencedColumns: ["id", "org_id"];
+          },
+          {
+            foreignKeyName: "rotation_pattern_days_shift_type_id_org_id_fkey";
+            columns: ["shift_type_id", "org_id"];
+            isOneToOne: false;
+            referencedRelation: "shift_types";
+            referencedColumns: ["id", "org_id"];
+          },
+        ];
+      };
+      rotation_patterns: {
+        Row: {
+          created_at: string;
+          cycle_length: number;
+          id: string;
+          name: string;
+          org_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          cycle_length: number;
+          id?: string;
+          name: string;
+          org_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          cycle_length?: number;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "rotation_patterns_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shift_types: {
+        Row: {
+          color: string;
+          created_at: string;
+          duration_minutes: number;
+          id: string;
+          name: string;
+          org_id: string;
+          start_time: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          color?: string;
+          created_at?: string;
+          duration_minutes: number;
+          id?: string;
+          name: string;
+          org_id: string;
+          start_time: string;
+          updated_at?: string;
+        };
+        Update: {
+          color?: string;
+          created_at?: string;
+          duration_minutes?: number;
+          id?: string;
+          name?: string;
+          org_id?: string;
+          start_time?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shift_types_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       team_members: {
         Row: {
           created_at: string;
@@ -317,6 +432,15 @@ export type Database = {
           role: Database["public"]["Enums"]["org_role"];
           status: string;
         }[];
+      };
+      save_rotation_pattern: {
+        Args: {
+          p_days: string[];
+          p_name: string;
+          p_org_id: string;
+          p_pattern_id?: string;
+        };
+        Returns: string;
       };
     };
     Enums: {

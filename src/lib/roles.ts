@@ -25,6 +25,11 @@ export function canManageTeams(role: OrgRole): boolean {
   return role === "admin" || role === "manager";
 }
 
+/** Shift types, rotation patterns and (later) schedules. */
+export function canManageScheduling(role: OrgRole): boolean {
+  return role === "admin" || role === "manager";
+}
+
 /** Roles that `role` may hand out in an invitation. */
 export function invitableRoles(role: OrgRole): OrgRole[] {
   if (role === "admin") return ["member", "manager", "admin"];

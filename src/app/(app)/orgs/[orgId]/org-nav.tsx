@@ -11,10 +11,14 @@ export function OrgNav({ orgId }: { orgId: string }) {
     { href: base, label: "Visão geral", exact: true },
     { href: `${base}/members`, label: "Membros" },
     { href: `${base}/teams`, label: "Equipes" },
+    { href: `${base}/shifts`, label: "Turnos e regimes" },
   ];
 
   return (
-    <nav aria-label="Seções da organização" className="flex gap-1 border-b">
+    <nav
+      aria-label="Seções da organização"
+      className="flex gap-1 overflow-x-auto border-b"
+    >
       {tabs.map((tab) => {
         const active = tab.exact
           ? pathname === tab.href
@@ -25,7 +29,7 @@ export function OrgNav({ orgId }: { orgId: string }) {
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
+              "-mb-px shrink-0 border-b-2 px-3 py-2 text-sm whitespace-nowrap transition-colors",
               active
                 ? "border-foreground font-medium"
                 : "border-transparent text-muted-foreground hover:text-foreground",

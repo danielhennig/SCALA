@@ -80,6 +80,13 @@ export function fromPostgrestError(error: PostgrestLikeError): AppError {
         "CONFLICT",
         "Essa pessoa já é membro da organização.",
       );
+    case "SC005":
+      return new AppError(
+        "VALIDATION_ERROR",
+        "O ciclo precisa ter de 1 a 28 dias e pelo menos um turno.",
+      );
+    case "P0002": // no_data_found, raised by our SQL functions
+      return new AppError("NOT_FOUND", "Recurso não encontrado.");
     default: {
       const appError = new AppError("INTERNAL_ERROR", "Erro inesperado.");
       appError.cause = error;
