@@ -85,6 +85,11 @@ export function fromPostgrestError(error: PostgrestLikeError): AppError {
         "VALIDATION_ERROR",
         "O ciclo precisa ter de 1 a 28 dias e pelo menos um turno.",
       );
+    case "SC006":
+      return new AppError(
+        "CONFLICT",
+        "Essa pessoa está afastada (férias ou licença) nesse dia.",
+      );
     case "P0002": // no_data_found, raised by our SQL functions
       return new AppError("NOT_FOUND", "Recurso não encontrado.");
     default: {

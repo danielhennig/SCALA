@@ -4,7 +4,10 @@ import { MAX_CYCLE_DAYS } from "./scheduling";
 
 export const MAX_PERIOD_DAYS = 62;
 
-const isoDate = z.string().refine(isIsoDate, "Data inválida (use AAAA-MM-DD).");
+/** A real calendar date as "YYYY-MM-DD". */
+export const isoDate = z
+  .string()
+  .refine(isIsoDate, "Data inválida (use AAAA-MM-DD).");
 
 export const createScheduleSchema = z
   .object({

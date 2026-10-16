@@ -53,6 +53,7 @@ export function GeneratePanel({
   const cycleLength = pattern?.days.length ?? 1;
   const [rows, setRows] = useState(() => initialRows(people, cycleLength));
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const byId = new Map(shiftTypes.map((st) => [st.id, st]));
@@ -96,11 +97,21 @@ export function GeneratePanel({
 
     setPending(true);
     setError(null);
+    setNotice(null);
     try {
-      await apiFetch(`/api/v1/orgs/${orgId}/schedules/${scheduleId}/generate`, {
+      const result = await apiFetch<{
+        created: number;
+        skippedForTimeOff: number;
+      }>(`/api/v1/orgs/${orgId}/schedules/${scheduleId}/generate`, {
         method: "POST",
         body: JSON.stringify({ patternId, assignments }),
       });
+      setNotice(
+        `${result.created} plantões gerados.` +
+          (result.skippedForTimeOff > 0
+            ? ` ${result.skippedForTimeOff} não foram gerados por afastamentos aprovados.`
+            : ""),
+      );
       router.refresh();
     } catch (err) {
       setError(
@@ -159,7 +170,8 @@ export function GeneratePanel({
           </legend>
           <p className="text-xs text-muted-foreground">
             O &quot;dia do ciclo&quot; é onde a pessoa está no primeiro dia da
-            escala. Em 12x36, dias diferentes formam as turmas A e B.
+            escala. Em 12x36, dias diferentes formam as turmas A e B. Dias de
+            afastamento aprovado são pulados.
           </p>
           <ul className="grid gap-2 sm:grid-cols-2">
             {people.map((person) => {
@@ -212,6 +224,14 @@ export function GeneratePanel({
         {error && (
           <p role="alert" className="text-sm text-destructive">
             {error}
+          </p>
+        )}
+        {notice && (
+          <p
+            role="status"
+            className="text-sm text-green-700 dark:text-green-400"
+          >
+            {notice}
           </p>
         )}
         <Button

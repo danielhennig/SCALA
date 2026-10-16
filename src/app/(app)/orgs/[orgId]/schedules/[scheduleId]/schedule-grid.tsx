@@ -17,8 +17,20 @@ import {
   formatWeekdayDate,
   WEEKDAY_LETTERS,
 } from "@/lib/format";
+import {
+  TIME_OFF_KIND_LABELS,
+  TIME_OFF_KIND_LETTERS,
+  type TimeOffKind,
+} from "@/lib/time-off";
 
 type ShiftTypeOption = { id: string; name: string; color: string };
+
+type GridTimeOff = {
+  userId: string;
+  kind: TimeOffKind;
+  startDate: string;
+  endDate: string;
+};
 
 type GridShift = {
   id: string;
@@ -40,6 +52,7 @@ export function ScheduleGrid({
   people,
   shifts,
   shiftTypes,
+  timeOff,
   canEdit,
   minRestHours,
   timeZone,
@@ -50,6 +63,8 @@ export function ScheduleGrid({
   people: Person[];
   shifts: GridShift[];
   shiftTypes: ShiftTypeOption[];
+  /** Approved time off overlapping the period. */
+  timeOff: GridTimeOff[];
   canEdit: boolean;
   minRestHours: number;
   timeZone: string;
@@ -78,6 +93,23 @@ export function ScheduleGrid({
     ]),
   );
   const totals = totalMinutesByUser(shifts);
+
+  // Days of approved time off, by cell. ISO dates compare as strings.
+  const timeOffByCell = new Map<string, TimeOffKind>();
+  for (const range of timeOff) {
+    for (const date of dates) {
+      if (range.startDate <= date && date <= range.endDate) {
+        timeOffByCell.set(cellKey(range.userId, date), range.kind);
+      }
+    }
+  }
+  // Shifts that exist on a day of time off (e.g. leave approved afterwards).
+  const timeOffConflicts = shifts.filter((s) =>
+    timeOffByCell.has(cellKey(s.userId, s.date)),
+  );
+  const selectedTimeOff = selected
+    ? timeOffByCell.get(cellKey(selected.userId, selected.date))
+    : undefined;
 
   async function apply(shiftTypeId: string | null) {
     if (!selected) return;
@@ -126,13 +158,20 @@ export function ScheduleGrid({
               <span className="mr-2 text-sm">
                 <strong>{namesById.get(selected.userId)}</strong> ·{" "}
                 {formatWeekdayDate(selected.date)}
+                {selectedTimeOff && (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {TIME_OFF_KIND_LABELS[selectedTimeOff]} (não pode ser
+                    escalado)
+                  </span>
+                )}
               </span>
               {shiftTypes.map((st) => (
                 <Button
                   key={st.id}
                   size="sm"
                   variant="outline"
-                  disabled={pending}
+                  disabled={pending || Boolean(selectedTimeOff)}
                   onClick={() => apply(st.id)}
                 >
                   <span
@@ -229,18 +268,25 @@ export function ScheduleGrid({
                   const isSelected =
                     selected?.userId === person.userId &&
                     selected.date === date;
+                  const offKind = timeOffByCell.get(key);
                   const label = `${person.fullName}, ${formatWeekdayDate(date)}: ${
                     cellShifts.length
                       ? cellShifts.map(describe).join(", ")
-                      : "folga"
-                  }`;
+                      : offKind
+                        ? TIME_OFF_KIND_LABELS[offKind]
+                        : "folga"
+                  }${cellShifts.length && offKind ? ` (conflito: ${TIME_OFF_KIND_LABELS[offKind]})` : ""}`;
                   const weekday = weekdayOf(date);
                   const box = (
                     <span
                       className={cn(
                         "flex size-7 items-center justify-center rounded text-xs font-medium",
                         first ? "text-white" : "text-muted-foreground",
+                        !first &&
+                          offKind &&
+                          "border border-dashed border-muted-foreground/60 bg-muted",
                         flagged.has(key) && "ring-2 ring-amber-500",
+                        first && offKind && "ring-2 ring-destructive",
                         isSelected &&
                           "outline-2 outline-offset-1 outline-foreground",
                       )}
@@ -250,7 +296,11 @@ export function ScheduleGrid({
                           : undefined
                       }
                     >
-                      {first ? (type?.name[0] ?? "•") : "·"}
+                      {first
+                        ? (type?.name[0] ?? "•")
+                        : offKind
+                          ? TIME_OFF_KIND_LETTERS[offKind]
+                          : "·"}
                       {cellShifts.length > 1 && "+"}
                     </span>
                   );
@@ -307,7 +357,42 @@ export function ScheduleGrid({
             {st.name}
           </li>
         ))}
+        {timeOffByCell.size > 0 &&
+          [...new Set(timeOffByCell.values())].map((kind) => (
+            <li key={kind} className="flex items-center gap-1">
+              <span
+                aria-hidden="true"
+                className="flex size-3.5 items-center justify-center rounded-sm border border-dashed border-muted-foreground/60 bg-muted text-[0.6rem]"
+              >
+                {TIME_OFF_KIND_LETTERS[kind]}
+              </span>
+              {TIME_OFF_KIND_LABELS[kind]}
+            </li>
+          ))}
       </ul>
+
+      {timeOffConflicts.length > 0 && (
+        <section className="grid gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm">
+          <h3 className="font-medium">
+            Plantões durante afastamento ({timeOffConflicts.length})
+          </h3>
+          <p className="text-muted-foreground">
+            O afastamento foi aprovado depois desses plantões. Selecione o dia e
+            use &quot;Folga&quot; para tirar o plantão.
+          </p>
+          <ul className="grid gap-1">
+            {timeOffConflicts.map((shift) => (
+              <li key={shift.id}>
+                {namesById.get(shift.userId)}: {formatShortDate(shift.date)} (
+                {TIME_OFF_KIND_LABELS[
+                  timeOffByCell.get(cellKey(shift.userId, shift.date))!
+                ].toLowerCase()}
+                )
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {violations.length > 0 && (
         <section className="grid gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/30">

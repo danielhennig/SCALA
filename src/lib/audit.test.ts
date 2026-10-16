@@ -181,6 +181,46 @@ describe("groupAuditEvents", () => {
     expect(entry.lines).toEqual(['Alterou o ciclo do regime "12x36"']);
   });
 
+  it("describes the time off flow: request, approval, cancellation", () => {
+    const row = {
+      user_id: BRUNO,
+      kind: "vacation",
+      start_date: "2026-11-10",
+      end_date: "2026-11-20",
+    };
+    const entries = groupAuditEvents(
+      [
+        event({
+          entity: "time_off",
+          action: "insert",
+          actorId: BRUNO,
+          txid: 20,
+          row: { ...row, status: "pending" },
+        }),
+        event({
+          entity: "time_off",
+          action: "update",
+          txid: 21,
+          row: { ...row, status: "approved" },
+          changed: { status: ["pending", "approved"] },
+        }),
+        event({
+          entity: "time_off",
+          action: "delete",
+          actorId: BRUNO,
+          txid: 22,
+          row: { ...row, kind: "leave", status: "pending" },
+        }),
+      ],
+      names,
+    );
+    expect(entries.flatMap((e) => e.lines).sort()).toEqual([
+      "Aprovou férias de Bruno (10/11/2026 a 20/11/2026)",
+      "Bruno cancelou o pedido de licença (10/11/2026 a 20/11/2026)",
+      "Bruno pediu férias (10/11/2026 a 20/11/2026)",
+    ]);
+  });
+
   it("labels changes without a session as Sistema", () => {
     const [entry] = groupAuditEvents(
       [

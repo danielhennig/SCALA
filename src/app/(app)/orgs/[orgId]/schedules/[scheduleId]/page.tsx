@@ -45,7 +45,7 @@ async function ScheduleSection({
     if (error instanceof AppError && error.code === "NOT_FOUND") notFound();
     throw error;
   }
-  const { schedule, people, shifts } = detail;
+  const { schedule, people, shifts, timeOff } = detail;
 
   const [shiftTypes, patterns] = await Promise.all([
     listShiftTypes(auth, orgId),
@@ -129,6 +129,7 @@ async function ScheduleSection({
         people={people}
         shifts={shifts}
         shiftTypes={shiftTypes}
+        timeOff={timeOff}
         canEdit={canManage}
         minRestHours={organization.minRestHours}
         timeZone={organization.timezone}

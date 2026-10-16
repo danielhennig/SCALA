@@ -25,6 +25,25 @@ export function formatShortDate(date: string): string {
   return shortDate.format(toUtc(date));
 }
 
+const fullDate = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** "2026-11-14" → "14/11/2026" */
+export function formatDate(date: string): string {
+  return fullDate.format(toUtc(date));
+}
+
+/** Inclusive range: "14/11/2026" or "10/11/2026 a 20/11/2026". */
+export function formatDateRange(start: string, end: string): string {
+  return start === end
+    ? formatDate(start)
+    : `${formatDate(start)} a ${formatDate(end)}`;
+}
+
 /** "2026-11-14" → "sáb., 14/11" */
 export function formatWeekdayDate(date: string): string {
   return `${weekdayShort.format(toUtc(date))}, ${formatShortDate(date)}`;

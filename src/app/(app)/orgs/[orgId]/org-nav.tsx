@@ -17,6 +17,7 @@ export function OrgNav({
   const tabs = [
     { href: base, label: "Visão geral", exact: true },
     { href: `${base}/schedules`, label: "Escalas" },
+    { href: `${base}/time-off`, label: "Afastamentos" },
     { href: `${base}/members`, label: "Membros" },
     { href: `${base}/teams`, label: "Equipes" },
     { href: `${base}/shifts`, label: "Turnos e regimes" },

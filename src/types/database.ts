@@ -543,6 +543,81 @@ export type Database = {
           },
         ];
       };
+      time_off: {
+        Row: {
+          created_at: string;
+          end_date: string;
+          id: string;
+          kind: Database["public"]["Enums"]["time_off_kind"];
+          org_id: string;
+          requested_by: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          start_date: string;
+          status: Database["public"]["Enums"]["time_off_status"];
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          end_date: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["time_off_kind"];
+          org_id: string;
+          requested_by?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          start_date: string;
+          status?: Database["public"]["Enums"]["time_off_status"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          end_date?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["time_off_kind"];
+          org_id?: string;
+          requested_by?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          start_date?: string;
+          status?: Database["public"]["Enums"]["time_off_status"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "time_off_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "time_off_requested_by_fkey";
+            columns: ["requested_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "time_off_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "time_off_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -612,6 +687,8 @@ export type Database = {
     Enums: {
       org_role: "admin" | "manager" | "member";
       schedule_status: "draft" | "published";
+      time_off_kind: "vacation" | "medical" | "leave" | "other";
+      time_off_status: "pending" | "approved" | "rejected";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -744,6 +821,8 @@ export const Constants = {
     Enums: {
       org_role: ["admin", "manager", "member"],
       schedule_status: ["draft", "published"],
+      time_off_kind: ["vacation", "medical", "leave", "other"],
+      time_off_status: ["pending", "approved", "rejected"],
     },
   },
 } as const;

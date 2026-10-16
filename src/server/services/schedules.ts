@@ -2,12 +2,14 @@ import "server-only";
 import { findRestViolations } from "@/domain/scheduling/analysis";
 import { daysBetween } from "@/domain/scheduling/dates";
 import { generateShifts } from "@/domain/scheduling/generate";
+import { excludeTimeOff } from "@/domain/scheduling/time-off";
 import {
   localDate,
   localDayBounds,
   zonedDateTimeToUtc,
 } from "@/domain/scheduling/zoned";
 import { canManageScheduling } from "@/lib/roles";
+import type { TimeOffKind } from "@/lib/time-off";
 import type {
   CreateScheduleData,
   GenerateScheduleData,
@@ -20,6 +22,7 @@ import { assertUuid } from "../params";
 import { getMyOrganization, getMyRole } from "./organizations";
 import { getRotationPattern } from "./rotation-patterns";
 import { listShiftTypes } from "./shift-types";
+import { listApprovedTimeOff } from "./time-off";
 
 export type ScheduleStatus = Database["public"]["Enums"]["schedule_status"];
 
@@ -50,10 +53,19 @@ export type SchedulePerson = {
   inTeam: boolean;
 };
 
+export type ScheduleTimeOff = {
+  userId: string;
+  kind: TimeOffKind;
+  startDate: string;
+  endDate: string;
+};
+
 export type ScheduleDetail = {
   schedule: ScheduleSummary;
   people: SchedulePerson[];
   shifts: ScheduleShift[];
+  /** Approved time off overlapping the period (members only see their own). */
+  timeOff: ScheduleTimeOff[];
 };
 
 const SUMMARY_COLUMNS =
@@ -258,7 +270,7 @@ export async function getScheduleDetail(
     getMyOrganization(auth, orgId),
   ]);
 
-  const [shiftsResult, teamResult] = await Promise.all([
+  const [shiftsResult, teamResult, timeOff] = await Promise.all([
     auth.supabase
       .from("shifts")
       .select("id, user_id, shift_type_id, starts_at, ends_at")
@@ -270,6 +282,10 @@ export async function getScheduleDetail(
         "user_id, membership:memberships!inner(profile:profiles!inner(full_name))",
       )
       .eq("team_id", schedule.teamId),
+    listApprovedTimeOff(auth, orgId, {
+      from: schedule.periodStart,
+      to: schedule.periodEnd,
+    }),
   ]);
   if (shiftsResult.error) throw fromPostgrestError(shiftsResult.error);
   if (teamResult.error) throw fromPostgrestError(teamResult.error);
@@ -318,6 +334,7 @@ export async function getScheduleDetail(
       a.fullName.localeCompare(b.fullName, "pt-BR"),
     ),
     shifts,
+    timeOff,
   };
 }
 
@@ -352,13 +369,16 @@ async function replaceShifts(
   return data;
 }
 
-/** Replaces every shift of the schedule with the pattern's expansion. */
+/**
+ * Replaces every shift of the schedule with the pattern's expansion, skipping
+ * days of approved time off (the DB would reject those shifts anyway).
+ */
 export async function generateSchedule(
   auth: AuthContext,
   orgId: string,
   scheduleId: string,
   { patternId, assignments }: GenerateScheduleData,
-): Promise<{ created: number }> {
+): Promise<{ created: number; skippedForTimeOff: number }> {
   await requireSchedulingManager(auth, orgId);
   const [{ organization }, schedule, pattern, shiftTypes] = await Promise.all([
     getMyOrganization(auth, orgId),
@@ -366,15 +386,20 @@ export async function generateSchedule(
     getRotationPattern(auth, orgId, patternId),
     listShiftTypes(auth, orgId),
   ]);
+  const timeOff = await listApprovedTimeOff(auth, orgId, {
+    from: schedule.periodStart,
+    to: schedule.periodEnd,
+  });
 
   const byId = new Map(shiftTypes.map((st) => [st.id, st]));
-  const generated = generateShifts({
+  const expanded = generateShifts({
     cycle: pattern.days.map((id) => (id ? (byId.get(id) ?? null) : null)),
     assignments,
     from: schedule.periodStart,
     to: schedule.periodEnd,
     timeZone: organization.timezone,
   });
+  const { kept: generated, skipped } = excludeTimeOff(expanded, timeOff);
 
   // The DB would reject these too; checking first gives a clearer message.
   if (findRestViolations(generated, 0).length > 0) {
@@ -394,7 +419,7 @@ export async function generateSchedule(
       ends_at: shift.endsAt,
     })),
   );
-  return { created };
+  return { created, skippedForTimeOff: skipped.length };
 }
 
 /** Sets (or clears) one person's shift on one day of the schedule. */

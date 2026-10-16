@@ -1,4 +1,6 @@
+import { formatDateRange } from "./format";
 import { type OrgRole, ROLE_LABELS } from "./roles";
+import { TIME_OFF_KIND_LABELS, type TimeOffKind } from "./time-off";
 
 /** One row of public.audit_log, as the API returns it. */
 export type AuditEvent = {
@@ -176,6 +178,37 @@ function describeGroup(events: AuditEvent[], names: AuditNames): string[] {
       case "rotation_pattern_days":
         patternDays.add(str(e.row.pattern_id));
         break;
+
+      case "time_off": {
+        const who = person(e.row.user_id);
+        const kind = (
+          TIME_OFF_KIND_LABELS[e.row.kind as TimeOffKind] ?? "afastamento"
+        ).toLowerCase();
+        const period = `(${formatDateRange(str(e.row.start_date), str(e.row.end_date))})`;
+        if (e.action === "insert") {
+          lines.push(
+            e.row.status === "pending"
+              ? `${who} pediu ${kind} ${period}`
+              : `Registrou ${kind} de ${who} ${period}`,
+          );
+        } else if (e.action === "update") {
+          const status = e.changed?.status?.[1];
+          lines.push(
+            status === "approved"
+              ? `Aprovou ${kind} de ${who} ${period}`
+              : status === "rejected"
+                ? `Recusou ${kind} de ${who} ${period}`
+                : `Alterou ${kind} de ${who} ${period}`,
+          );
+        } else {
+          lines.push(
+            e.actorId === str(e.row.user_id) && e.row.status === "pending"
+              ? `${who} cancelou o pedido de ${kind} ${period}`
+              : `Excluiu ${kind} de ${who} ${period}`,
+          );
+        }
+        break;
+      }
 
       default:
         lines.push(`${e.action} em ${e.entity}`);
