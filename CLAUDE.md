@@ -30,6 +30,7 @@ Plano completo: `C:\Users\Daniel\.claude\plans\quero-desenvolver-um-site-dreamy-
 - `npm run dev` / `npm run build`
 - `npm run lint`, `npm run typecheck`, `npm test`, `npm run format:check`
 - `npx supabase start` (exige Docker Desktop), `npx supabase test db`
+- `npm run test:e2e [-- filtro]`: suítes HTTP em `scripts/e2e/` contra o app rodando (`npm run dev`) e o Supabase local; recusam rodar contra Supabase remoto
 - `npx supabase migration new <nome>` → editar SQL → `npx supabase db reset` → `npm run db:types`
 - Setup local: copiar `.env.example` para `.env.local` com os valores de `npx supabase status`
 - Remoto (Supabase `bzurlufyxitreuudyosq`, sa-east-1): migrations só via `npx supabase db push`, nunca pelo dashboard/MCP, para não divergir o histórico
@@ -45,7 +46,7 @@ Plano completo: `C:\Users\Daniel\.claude\plans\quero-desenvolver-um-site-dreamy-
   - `src/server/services/` regras de negócio usadas por páginas e API; `src/server/http.ts` auth e mapeamento de erros
   - `src/lib/validation/` schemas Zod compartilhados
   - `supabase/migrations/` SQL versionado; `supabase/tests/` pgTAP
-- Testes: `*.test.ts` ao lado do código em `src/`; todo regime de escala e regra de domínio tem teste.
+- Testes: `*.test.ts` ao lado do código em `src/`; todo regime de escala e regra de domínio tem teste. Cada etapa ganha uma suíte `scripts/e2e/NN-nome.mjs` (exporta `title` e uma função default que recebe `{ runId, check, signUp, api }`).
 - Banco: RLS em todas as tabelas; nunca usar a secret key (antiga `service_role`) no app; operações multi-etapa em funções Postgres via `rpc`; horários em `timestamptz`.
 
 # Como trabalhar
