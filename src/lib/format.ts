@@ -1,6 +1,8 @@
 // Display helpers for calendar dates ("YYYY-MM-DD"), formatted as pt-BR.
 // Dates are rendered in UTC because they are calendar days, not instants.
 
+import { localDate, localTime } from "@/domain/scheduling/zoned";
+
 const shortDate = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "2-digit",
@@ -52,6 +54,20 @@ export function formatWeekdayDate(date: string): string {
 /** "2026-11" → "novembro de 2026" */
 export function formatMonth(yearMonth: string): string {
   return monthYear.format(toUtc(`${yearMonth}-01`));
+}
+
+/**
+ * "sáb., 14/11 07:00–19:00 · Diurno" in the organization's time zone.
+ * (+1) marks shifts that end on the next day.
+ */
+export function formatShiftLabel(
+  shift: { startsAt: string; endsAt: string; shiftTypeName: string | null },
+  timeZone: string,
+): string {
+  const date = localDate(shift.startsAt, timeZone);
+  const nextDay = localDate(shift.endsAt, timeZone) !== date ? " (+1)" : "";
+  const type = shift.shiftTypeName ? ` · ${shift.shiftTypeName}` : "";
+  return `${formatWeekdayDate(date)} ${localTime(shift.startsAt, timeZone)}–${localTime(shift.endsAt, timeZone)}${nextDay}${type}`;
 }
 
 /** One-letter weekday headers, Sunday first. */

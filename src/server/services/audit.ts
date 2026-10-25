@@ -7,7 +7,7 @@ import {
 import { canManageMembers } from "@/lib/roles";
 import type { AuthContext } from "../auth";
 import { AppError, fromPostgrestError } from "../errors";
-import { getMyRole } from "./organizations";
+import { getMyOrganization, getMyRole } from "./organizations";
 import { listRotationPatterns } from "./rotation-patterns";
 import { listSchedules } from "./schedules";
 import { listTeams } from "./teams";
@@ -69,20 +69,25 @@ export async function listAuditEntries(
   const userIds = new Set<string>();
   for (const event of events) {
     if (event.actorId) userIds.add(event.actorId);
-    if (typeof event.row.user_id === "string") userIds.add(event.row.user_id);
+    for (const key of ["user_id", "requester_id", "target_id"]) {
+      const value = event.row[key];
+      if (typeof value === "string") userIds.add(value);
+    }
   }
 
-  const [profiles, schedules, teams, patterns] = await Promise.all([
-    userIds.size
-      ? auth.supabase
-          .from("profiles")
-          .select("id, full_name")
-          .in("id", [...userIds])
-      : Promise.resolve({ data: [], error: null }),
-    listSchedules(auth, orgId),
-    listTeams(auth, orgId),
-    listRotationPatterns(auth, orgId),
-  ]);
+  const [{ organization }, profiles, schedules, teams, patterns] =
+    await Promise.all([
+      getMyOrganization(auth, orgId),
+      userIds.size
+        ? auth.supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", [...userIds])
+        : Promise.resolve({ data: [], error: null }),
+      listSchedules(auth, orgId),
+      listTeams(auth, orgId),
+      listRotationPatterns(auth, orgId),
+    ]);
   if (profiles.error) throw fromPostgrestError(profiles.error);
 
   return groupAuditEvents(events, {
@@ -91,5 +96,6 @@ export async function listAuditEntries(
     schedules: new Map(schedules.map((s) => [s.id, s.name])),
     teams: new Map(teams.map((t) => [t.id, t.name])),
     patterns: new Map(patterns.map((p) => [p.id, p.name])),
+    timeZone: organization.timezone,
   });
 }

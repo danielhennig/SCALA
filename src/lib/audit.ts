@@ -1,4 +1,5 @@
-import { formatDateRange } from "./format";
+import { localDate } from "@/domain/scheduling/zoned";
+import { formatDateRange, formatShortDate } from "./format";
 import { type OrgRole, ROLE_LABELS } from "./roles";
 import { TIME_OFF_KIND_LABELS, type TimeOffKind } from "./time-off";
 
@@ -20,6 +21,8 @@ export type AuditNames = {
   schedules: Map<string, string>;
   teams: Map<string, string>;
   patterns: Map<string, string>;
+  /** Organization time zone, to show shift dates as local days. */
+  timeZone?: string;
 };
 
 /** One transaction by one person, described in plain Portuguese. */
@@ -53,6 +56,7 @@ function harvestNames(events: AuditEvent[], names: AuditNames): AuditNames {
     schedules: new Map(names.schedules),
     teams: new Map(names.teams),
     patterns: new Map(names.patterns),
+    timeZone: names.timeZone,
   };
   const target: Record<string, Map<string, string>> = {
     schedules: result.schedules,
@@ -114,6 +118,8 @@ function describeGroup(events: AuditEvent[], names: AuditNames): string[] {
         break;
 
       case "shifts": {
+        // Updates only come from approved swaps, described by the swap line.
+        if (e.action === "update") break;
         const scheduleId = str(e.row.schedule_id);
         if (deletedSchedules.has(scheduleId)) break; // cascade noise
         const c = shifts.get(scheduleId) ?? { added: 0, removed: 0 };
@@ -178,6 +184,56 @@ function describeGroup(events: AuditEvent[], names: AuditNames): string[] {
       case "rotation_pattern_days":
         patternDays.add(str(e.row.pattern_id));
         break;
+
+      case "shift_swaps": {
+        if (e.action === "delete") break; // cascades from deleted shifts
+        const requester = person(e.row.requester_id);
+        const target = person(e.row.target_id);
+        const timeZone = names.timeZone ?? "America/Sao_Paulo";
+        const offered = formatShortDate(
+          localDate(str(e.row.offered_starts_at), timeZone),
+        );
+        const requested = e.row.requested_shift_id
+          ? formatShortDate(localDate(str(e.row.requested_starts_at), timeZone))
+          : null;
+
+        if (e.action === "insert") {
+          lines.push(
+            requested
+              ? `${requester} propôs trocar o plantão de ${offered} pelo de ${target} em ${requested}`
+              : `${requester} pediu que ${target} cubra o plantão de ${offered}`,
+          );
+          break;
+        }
+        switch (e.changed?.status?.[1]) {
+          case "pending_approval":
+            lines.push(
+              `${target} aceitou o pedido de ${requester} (${offered})`,
+            );
+            break;
+          case "declined":
+            lines.push(
+              `${target} recusou o pedido de ${requester} (${offered})`,
+            );
+            break;
+          case "approved":
+            lines.push(
+              requested
+                ? `Aprovou a troca entre ${requester} e ${target} (${offered} ↔ ${requested})`
+                : `Aprovou: ${target} cobre ${requester} em ${offered}`,
+            );
+            break;
+          case "rejected":
+            lines.push(
+              `Recusou a troca entre ${requester} e ${target} (${offered})`,
+            );
+            break;
+          case "cancelled":
+            lines.push(`${requester} cancelou o pedido de troca (${offered})`);
+            break;
+        }
+        break;
+      }
 
       case "time_off": {
         const who = person(e.row.user_id);
@@ -251,20 +307,31 @@ export function groupAuditEvents(
     groups.set(key, [...(groups.get(key) ?? []), event]);
   }
 
-  return [...groups.entries()]
-    .map(([key, group]) => {
-      const chronological = [...group].sort((a, b) => a.id - b.id);
-      const latest = chronological.at(-1)!;
-      return {
-        key,
-        createdAt: latest.createdAt,
-        actorId: latest.actorId,
-        actorName: latest.actorId
-          ? (resolved.people.get(latest.actorId) ?? "Ex-membro")
-          : "Sistema",
-        lines: describeGroup(chronological, resolved),
-      };
-    })
-    .filter((entry) => entry.lines.length > 0)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return (
+    [...groups.entries()]
+      .map(([key, group]) => {
+        const chronological = [...group].sort((a, b) => a.id - b.id);
+        const latest = chronological.at(-1)!;
+        return {
+          entry: {
+            key,
+            createdAt: latest.createdAt,
+            actorId: latest.actorId,
+            actorName: latest.actorId
+              ? (resolved.people.get(latest.actorId) ?? "Ex-membro")
+              : "Sistema",
+            lines: describeGroup(chronological, resolved),
+          },
+          latestId: latest.id,
+        };
+      })
+      .filter(({ entry }) => entry.lines.length > 0)
+      // Newest first; ties (same timestamp) broken by the sequential event id.
+      .sort(
+        (a, b) =>
+          b.entry.createdAt.localeCompare(a.entry.createdAt) ||
+          b.latestId - a.latestId,
+      )
+      .map(({ entry }) => entry)
+  );
 }

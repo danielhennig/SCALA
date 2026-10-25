@@ -221,6 +221,61 @@ describe("groupAuditEvents", () => {
     ]);
   });
 
+  it("describes a coverage request from start to approval", () => {
+    const EVA = "u-eva";
+    const withEva: AuditNames = {
+      ...names,
+      people: new Map([...names.people, [EVA, "Eva"]]),
+      timeZone: "America/Sao_Paulo",
+    };
+    // 22:30 in São Paulo on Nov 14 is 01:30Z on Nov 15: the local day wins.
+    const row = {
+      requester_id: BRUNO,
+      target_id: EVA,
+      offered_starts_at: "2026-11-15T01:30:00Z",
+      requested_shift_id: null,
+    };
+    const entries = groupAuditEvents(
+      [
+        event({
+          entity: "shift_swaps",
+          action: "insert",
+          actorId: BRUNO,
+          txid: 30,
+          row,
+        }),
+        event({
+          entity: "shift_swaps",
+          action: "update",
+          actorId: EVA,
+          txid: 31,
+          row,
+          changed: { status: ["pending_target", "pending_approval"] },
+        }),
+        event({
+          entity: "shifts",
+          action: "update",
+          txid: 32,
+          row: { schedule_id: "s1" },
+          changed: { user_id: [BRUNO, EVA] },
+        }),
+        event({
+          entity: "shift_swaps",
+          action: "update",
+          txid: 32,
+          row,
+          changed: { status: ["pending_approval", "approved"] },
+        }),
+      ],
+      withEva,
+    );
+    expect(entries.map((e) => e.lines)).toEqual([
+      ["Aprovou: Eva cobre Bruno em 14/11"],
+      ["Eva aceitou o pedido de Bruno (14/11)"],
+      ["Bruno pediu que Eva cubra o plantão de 14/11"],
+    ]);
+  });
+
   it("labels changes without a session as Sistema", () => {
     const [entry] = groupAuditEvents(
       [

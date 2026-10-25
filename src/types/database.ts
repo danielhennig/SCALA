@@ -375,6 +375,127 @@ export type Database = {
           },
         ];
       };
+      shift_swaps: {
+        Row: {
+          created_at: string;
+          id: string;
+          offered_ends_at: string;
+          offered_shift_id: string;
+          offered_shift_type_id: string | null;
+          offered_starts_at: string;
+          org_id: string;
+          requested_ends_at: string | null;
+          requested_shift_id: string | null;
+          requested_shift_type_id: string | null;
+          requested_starts_at: string | null;
+          requester_id: string;
+          responded_at: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          status: Database["public"]["Enums"]["swap_status"];
+          target_id: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          offered_ends_at: string;
+          offered_shift_id: string;
+          offered_shift_type_id?: string | null;
+          offered_starts_at: string;
+          org_id: string;
+          requested_ends_at?: string | null;
+          requested_shift_id?: string | null;
+          requested_shift_type_id?: string | null;
+          requested_starts_at?: string | null;
+          requester_id: string;
+          responded_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["swap_status"];
+          target_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          offered_ends_at?: string;
+          offered_shift_id?: string;
+          offered_shift_type_id?: string | null;
+          offered_starts_at?: string;
+          org_id?: string;
+          requested_ends_at?: string | null;
+          requested_shift_id?: string | null;
+          requested_shift_type_id?: string | null;
+          requested_starts_at?: string | null;
+          requester_id?: string;
+          responded_at?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          status?: Database["public"]["Enums"]["swap_status"];
+          target_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shift_swaps_offered_shift_id_fkey";
+            columns: ["offered_shift_id"];
+            isOneToOne: false;
+            referencedRelation: "shifts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_offered_shift_type_id_fkey";
+            columns: ["offered_shift_type_id"];
+            isOneToOne: false;
+            referencedRelation: "shift_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_requested_shift_id_fkey";
+            columns: ["requested_shift_id"];
+            isOneToOne: false;
+            referencedRelation: "shifts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_requested_shift_type_id_fkey";
+            columns: ["requested_shift_type_id"];
+            isOneToOne: false;
+            referencedRelation: "shift_types";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_requester_id_fkey";
+            columns: ["requester_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_reviewed_by_fkey";
+            columns: ["reviewed_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shift_swaps_target_id_fkey";
+            columns: ["target_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shift_types: {
         Row: {
           color: string;
@@ -624,6 +745,10 @@ export type Database = {
     };
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string };
+      cancel_shift_swap: {
+        Args: { p_swap_id: string };
+        Returns: Database["public"]["Enums"]["swap_status"];
+      };
       create_invitation: {
         Args: {
           p_email: string;
@@ -657,6 +782,14 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      create_shift_swap: {
+        Args: {
+          p_offered_shift_id: string;
+          p_requested_shift_id?: string;
+          p_target_id: string;
+        };
+        Returns: string;
+      };
       get_invitation: {
         Args: { p_token: string };
         Returns: {
@@ -674,6 +807,14 @@ export type Database = {
         };
         Returns: number;
       };
+      respond_shift_swap: {
+        Args: { p_accept: boolean; p_swap_id: string };
+        Returns: Database["public"]["Enums"]["swap_status"];
+      };
+      review_shift_swap: {
+        Args: { p_approve: boolean; p_swap_id: string };
+        Returns: Database["public"]["Enums"]["swap_status"];
+      };
       save_rotation_pattern: {
         Args: {
           p_days: string[];
@@ -687,6 +828,13 @@ export type Database = {
     Enums: {
       org_role: "admin" | "manager" | "member";
       schedule_status: "draft" | "published";
+      swap_status:
+        | "pending_target"
+        | "pending_approval"
+        | "approved"
+        | "declined"
+        | "rejected"
+        | "cancelled";
       time_off_kind: "vacation" | "medical" | "leave" | "other";
       time_off_status: "pending" | "approved" | "rejected";
     };
@@ -821,6 +969,14 @@ export const Constants = {
     Enums: {
       org_role: ["admin", "manager", "member"],
       schedule_status: ["draft", "published"],
+      swap_status: [
+        "pending_target",
+        "pending_approval",
+        "approved",
+        "declined",
+        "rejected",
+        "cancelled",
+      ],
       time_off_kind: ["vacation", "medical", "leave", "other"],
       time_off_status: ["pending", "approved", "rejected"],
     },

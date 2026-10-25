@@ -160,6 +160,14 @@ function ShiftCard({
             {shift.scheduleName}
           </Link>
         </div>
+        {!inProgress && (
+          <Link
+            href={`/orgs/${shift.orgId}/swaps?shift=${shift.id}`}
+            className="justify-self-start text-sm font-medium underline-offset-4 hover:underline"
+          >
+            Pedir troca
+          </Link>
+        )}
       </div>
     </li>
   );

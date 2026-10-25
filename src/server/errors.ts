@@ -90,6 +90,16 @@ export function fromPostgrestError(error: PostgrestLikeError): AppError {
         "CONFLICT",
         "Essa pessoa está afastada (férias ou licença) nesse dia.",
       );
+    case "SC007":
+      return new AppError(
+        "BAD_REQUEST",
+        "Esse plantão não pode entrar na troca (passado, em rascunho, de outra pessoa ou alterado desde o pedido).",
+      );
+    case "SC008":
+      return new AppError(
+        "CONFLICT",
+        "Esse pedido de troca já foi respondido, aprovado ou cancelado.",
+      );
     case "P0002": // no_data_found, raised by our SQL functions
       return new AppError("NOT_FOUND", "Recurso não encontrado.");
     default: {

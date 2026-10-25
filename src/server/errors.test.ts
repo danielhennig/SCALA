@@ -16,6 +16,8 @@ describe("fromPostgrestError", () => {
     ["SC004", 409, "CONFLICT"],
     ["SC005", 400, "VALIDATION_ERROR"],
     ["SC006", 409, "CONFLICT"],
+    ["SC007", 400, "BAD_REQUEST"],
+    ["SC008", 409, "CONFLICT"],
     ["P0002", 404, "NOT_FOUND"],
   ])("maps %s to %i %s", (code, status, appCode) => {
     const error = fromPostgrestError({ code, message: "db error" });

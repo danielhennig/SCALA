@@ -7,16 +7,20 @@ import { cn } from "cn";
 export function OrgNav({
   orgId,
   showAudit,
+  pendingSwaps,
 }: {
   orgId: string;
   /** Admin-only tab; the page and RLS enforce it too. */
   showAudit: boolean;
+  /** Swap requests waiting on the viewer (badge on the tab). */
+  pendingSwaps: number;
 }) {
   const pathname = usePathname();
   const base = `/orgs/${orgId}`;
   const tabs = [
     { href: base, label: "Visão geral", exact: true },
     { href: `${base}/schedules`, label: "Escalas" },
+    { href: `${base}/swaps`, label: "Trocas", badge: pendingSwaps },
     { href: `${base}/time-off`, label: "Afastamentos" },
     { href: `${base}/members`, label: "Membros" },
     { href: `${base}/teams`, label: "Equipes" },
@@ -39,13 +43,21 @@ export function OrgNav({
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "-mb-px shrink-0 border-b-2 px-3 py-2 text-sm whitespace-nowrap transition-colors",
+              "-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm whitespace-nowrap transition-colors",
               active
                 ? "border-foreground font-medium"
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             {tab.label}
+            {tab.badge ? (
+              <span
+                className="rounded-full bg-foreground px-1.5 text-xs font-medium text-background"
+                aria-label={`${tab.badge} pendente${tab.badge > 1 ? "s" : ""}`}
+              >
+                {tab.badge}
+              </span>
+            ) : null}
           </Link>
         );
       })}

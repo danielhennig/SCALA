@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ROLE_LABELS } from "@/lib/roles";
+import { canManageScheduling, ROLE_LABELS } from "@/lib/roles";
+import { countActionableSwaps } from "@/server/services/swaps";
 import { loadOrg } from "./load-org";
 import { OrgNav } from "./org-nav";
 
@@ -23,7 +24,12 @@ async function OrganizationHeader({
 }: {
   params: Promise<{ orgId: string }>;
 }) {
-  const { orgId, organization, role } = await loadOrg(params);
+  const { auth, orgId, organization, role } = await loadOrg(params);
+  const pendingSwaps = await countActionableSwaps(
+    auth,
+    orgId,
+    canManageScheduling(role),
+  );
 
   return (
     <div className="grid gap-4">
@@ -41,7 +47,11 @@ async function OrganizationHeader({
           Você é {ROLE_LABELS[role].toLowerCase()} · {organization.slug}
         </p>
       </div>
-      <OrgNav orgId={orgId} showAudit={role === "admin"} />
+      <OrgNav
+        orgId={orgId}
+        showAudit={role === "admin"}
+        pendingSwaps={pendingSwaps}
+      />
     </div>
   );
 }
