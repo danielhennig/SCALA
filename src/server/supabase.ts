@@ -1,5 +1,6 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { io } from "next/cache";
 import { cookies } from "next/headers";
 import { supabasePublishableKey, supabaseUrl } from "@/lib/supabase/config";
@@ -33,6 +34,21 @@ export async function createClient() {
           // refreshes the session and writes the cookies on every request.
         }
       },
+    },
+  });
+}
+
+// Client without a session: queries run as the anon role, so RLS denies
+// everything except what security definer functions granted to anon allow.
+// Only for endpoints that authenticate by other means (the calendar feed
+// token); everything else uses createClient().
+export async function createAnonClient() {
+  await io(); // same clock read as above
+  return createSupabaseClient<Database>(supabaseUrl, supabasePublishableKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
     },
   });
 }

@@ -46,9 +46,14 @@ export function formatDateRange(start: string, end: string): string {
     : `${formatDate(start)} a ${formatDate(end)}`;
 }
 
+/** "2026-11-14" → "sáb." */
+export function formatWeekday(date: string): string {
+  return weekdayShort.format(toUtc(date));
+}
+
 /** "2026-11-14" → "sáb., 14/11" */
 export function formatWeekdayDate(date: string): string {
-  return `${weekdayShort.format(toUtc(date))}, ${formatShortDate(date)}`;
+  return `${formatWeekday(date)}, ${formatShortDate(date)}`;
 }
 
 /** "2026-11" → "novembro de 2026" */

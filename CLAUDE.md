@@ -48,6 +48,7 @@ Plano completo: `C:\Users\Daniel\.claude\plans\quero-desenvolver-um-site-dreamy-
   - `supabase/migrations/` SQL versionado; `supabase/tests/` pgTAP
 - Testes: `*.test.ts` ao lado do código em `src/`; todo regime de escala e regra de domínio tem teste. Cada etapa ganha uma suíte `scripts/e2e/NN-nome.mjs` (exporta `title` e uma função default que recebe `{ runId, check, signUp, api }`).
 - Banco: RLS em todas as tabelas; nunca usar a secret key (antiga `service_role`) no app; operações multi-etapa em funções Postgres via `rpc`; horários em `timestamptz`.
+- Endpoints públicos autenticados por token (ex.: feed iCal): `createAnonClient()` + função `security definer` concedida a `anon`; guardar só o SHA-256 do token (como em convites).
 - Armadilhas já encontradas:
   - Política de SELECT deve usar as colunas da própria linha: `INSERT/UPDATE ... RETURNING` aplica o SELECT à linha nova, e uma função que relê a mesma tabela não a enxerga. Testar com `returning` no pgTAP.
   - pgTAP: consultas feitas como `postgres` (sem RLS) precisam filtrar pela org do teste; o banco local pode ter dados de outras execuções.

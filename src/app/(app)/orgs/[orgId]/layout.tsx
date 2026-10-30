@@ -11,7 +11,7 @@ export default function OrganizationLayout({
 }: LayoutProps<"/orgs/[orgId]">) {
   return (
     <div className="grid gap-6">
-      <Suspense fallback={<div className="h-24" />}>
+      <Suspense fallback={<div className="h-24 print:hidden" />}>
         <OrganizationHeader params={params} />
       </Suspense>
       {children}
@@ -32,7 +32,7 @@ async function OrganizationHeader({
   );
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-4 print:hidden">
       <div className="grid gap-1">
         <Link
           href="/orgs"

@@ -71,6 +71,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      calendar_feeds: {
+        Row: {
+          created_at: string;
+          token_hash: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feeds_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invitations: {
         Row: {
           accepted_at: string | null;
@@ -745,6 +772,18 @@ export type Database = {
     };
     Functions: {
       accept_invitation: { Args: { p_token: string }; Returns: string };
+      calendar_feed_shifts: {
+        Args: { p_token: string };
+        Returns: {
+          ends_at: string;
+          org_name: string;
+          schedule_name: string;
+          shift_id: string;
+          shift_type_name: string;
+          starts_at: string;
+          team_name: string;
+        }[];
+      };
       cancel_shift_swap: {
         Args: { p_swap_id: string };
         Returns: Database["public"]["Enums"]["swap_status"];
@@ -814,6 +853,10 @@ export type Database = {
       review_shift_swap: {
         Args: { p_approve: boolean; p_swap_id: string };
         Returns: Database["public"]["Enums"]["swap_status"];
+      };
+      rotate_calendar_feed: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
       };
       save_rotation_pattern: {
         Args: {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ApiActionButton } from "@/components/api-action-button";
+import { buttonVariants } from "@/components/ui/button";
 import { eachDate } from "@/domain/scheduling/dates";
 import { formatShortDate } from "@/lib/format";
 import { canManageScheduling } from "@/lib/roles";
@@ -71,36 +72,52 @@ async function ScheduleSection({
             {formatShortDate(schedule.periodEnd)} · {shifts.length} plantões
           </p>
         </div>
-        {canManage && (
-          <div className="flex flex-wrap items-start gap-2">
-            {schedule.status === "draft" ? (
+        <div className="flex flex-wrap items-start gap-2">
+          <Link
+            href={`/orgs/${orgId}/schedules/${schedule.id}/print`}
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Imprimir / PDF
+          </Link>
+          {/* A download, not a page: plain <a> so Next doesn't prefetch it. */}
+          <a
+            href={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/export`}
+            download
+            className={buttonVariants({ variant: "outline", size: "sm" })}
+          >
+            Exportar CSV
+          </a>
+          {canManage && (
+            <>
+              {schedule.status === "draft" ? (
+                <ApiActionButton
+                  path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/publish`}
+                  method="POST"
+                  confirmMessage={`Publicar "${schedule.name}"? A equipe passa a ver a escala.`}
+                  variant="default"
+                >
+                  Publicar
+                </ApiActionButton>
+              ) : (
+                <ApiActionButton
+                  path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/unpublish`}
+                  method="POST"
+                  confirmMessage={`Voltar "${schedule.name}" para rascunho? A equipe deixa de ver a escala.`}
+                >
+                  Voltar para rascunho
+                </ApiActionButton>
+              )}
               <ApiActionButton
-                path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/publish`}
-                method="POST"
-                confirmMessage={`Publicar "${schedule.name}"? A equipe passa a ver a escala.`}
-                variant="default"
+                path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}`}
+                confirmMessage={`Excluir a escala ${schedule.name} e todos os seus plantões?`}
+                redirectTo={`/orgs/${orgId}/schedules`}
+                variant="destructive"
               >
-                Publicar
+                Excluir escala
               </ApiActionButton>
-            ) : (
-              <ApiActionButton
-                path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}/unpublish`}
-                method="POST"
-                confirmMessage={`Voltar "${schedule.name}" para rascunho? A equipe deixa de ver a escala.`}
-              >
-                Voltar para rascunho
-              </ApiActionButton>
-            )}
-            <ApiActionButton
-              path={`/api/v1/orgs/${orgId}/schedules/${schedule.id}`}
-              confirmMessage={`Excluir a escala ${schedule.name} e todos os seus plantões?`}
-              redirectTo={`/orgs/${orgId}/schedules`}
-              variant="destructive"
-            >
-              Excluir escala
-            </ApiActionButton>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {canManage && schedule.status === "published" && (

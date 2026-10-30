@@ -5,8 +5,11 @@ import { addDays } from "@/domain/scheduling/dates";
 import { formatDuration } from "@/domain/scheduling/time";
 import { localDate, localTime } from "@/domain/scheduling/zoned";
 import { formatWeekdayDate } from "@/lib/format";
+import { DEFAULT_TIMEZONE } from "@/lib/validation/organizations";
 import { requireUser } from "@/server/auth";
+import { getCalendarFeedStatus } from "@/server/services/calendar";
 import { listMyShifts, type MyShift } from "@/server/services/me";
+import { CalendarFeedCard } from "./calendar-feed-card";
 
 export const metadata: Metadata = { title: "Minha escala · SCALA" };
 
@@ -28,7 +31,19 @@ export default function MyShiftsPage() {
       >
         <UpcomingShifts />
       </Suspense>
+      <Suspense fallback={null}>
+        <CalendarFeed />
+      </Suspense>
     </div>
+  );
+}
+
+async function CalendarFeed() {
+  const feed = await getCalendarFeedStatus(await requireUser());
+  return (
+    <CalendarFeedCard
+      activeSince={feed ? localDate(feed.createdAt, DEFAULT_TIMEZONE) : null}
+    />
   );
 }
 
