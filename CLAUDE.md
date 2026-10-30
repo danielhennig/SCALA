@@ -52,6 +52,7 @@ Plano completo: `C:\Users\Daniel\.claude\plans\quero-desenvolver-um-site-dreamy-
 - Armadilhas já encontradas:
   - Política de SELECT deve usar as colunas da própria linha: `INSERT/UPDATE ... RETURNING` aplica o SELECT à linha nova, e uma função que relê a mesma tabela não a enxerga. Testar com `returning` no pgTAP.
   - pgTAP: consultas feitas como `postgres` (sem RLS) precisam filtrar pela org do teste; o banco local pode ter dados de outras execuções.
+  - PostgREST corta respostas em 1000 linhas (`max_rows`) sem erro. Listas que podem passar disso precisam de paginação com `.range()` (ver `src/server/services/reports.ts`).
   - Cache Components: `src/server/supabase.ts` faz `cookies()` → `io()` → cria o cliente (o supabase-js lê `Date.now()` ao ser criado, o que é proibido em pré-renders com sessão). `try/catch` em código de servidor deve chamar `unstable_rethrow(err)` primeiro.
 
 # Como trabalhar

@@ -51,7 +51,19 @@ export async function parseJsonBody<T extends z.ZodType>(
     );
   }
 
-  const result = schema.safeParse(body);
+  return validate(body, schema);
+}
+
+/** Query string → schema. Absent parameters become undefined. */
+export function parseSearchParams<T extends z.ZodType>(
+  params: URLSearchParams,
+  schema: T,
+): z.output<T> {
+  return validate(Object.fromEntries(params), schema);
+}
+
+function validate<T extends z.ZodType>(input: unknown, schema: T): z.output<T> {
+  const result = schema.safeParse(input);
   if (!result.success) {
     throw new AppError(
       "VALIDATION_ERROR",

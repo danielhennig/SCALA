@@ -6,10 +6,13 @@ import { cn } from "cn";
 
 export function OrgNav({
   orgId,
+  showReports,
   showAudit,
   pendingSwaps,
 }: {
   orgId: string;
+  /** Admins and managers; the page and service enforce it too. */
+  showReports: boolean;
   /** Admin-only tab; the page and RLS enforce it too. */
   showAudit: boolean;
   /** Swap requests waiting on the viewer (badge on the tab). */
@@ -25,6 +28,7 @@ export function OrgNav({
     { href: `${base}/members`, label: "Membros" },
     { href: `${base}/teams`, label: "Equipes" },
     { href: `${base}/shifts`, label: "Turnos e regimes" },
+    ...(showReports ? [{ href: `${base}/reports`, label: "Horas" }] : []),
     ...(showAudit ? [{ href: `${base}/audit`, label: "Auditoria" }] : []),
   ];
 

@@ -25,11 +25,8 @@ async function OrganizationHeader({
   params: Promise<{ orgId: string }>;
 }) {
   const { auth, orgId, organization, role } = await loadOrg(params);
-  const pendingSwaps = await countActionableSwaps(
-    auth,
-    orgId,
-    canManageScheduling(role),
-  );
+  const isManager = canManageScheduling(role);
+  const pendingSwaps = await countActionableSwaps(auth, orgId, isManager);
 
   return (
     <div className="grid gap-4 print:hidden">
@@ -49,6 +46,7 @@ async function OrganizationHeader({
       </div>
       <OrgNav
         orgId={orgId}
+        showReports={isManager}
         showAudit={role === "admin"}
         pendingSwaps={pendingSwaps}
       />
